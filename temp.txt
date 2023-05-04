@@ -1,0 +1,3 @@
+original/a01/a01-001/strokesz.xml
+
+lineStrokes-all\lineStrokes/a01/a01-000/a01-000u-01.xml
