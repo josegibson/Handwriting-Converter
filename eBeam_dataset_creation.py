@@ -4,22 +4,29 @@ import cv2
 
 
 class HandwrittenLine:
-    def __init__(self, line_strokes, text):
+    def __init__(self, line_strokes, text, threshold=200, im_height=None, im_width=None):
         self.text = text
         self.line_strokes = line_strokes
         self.min_x = None
         self.min_y = None
         self.max_x = None
         self.max_y = None
+        self.im_height = im_height
+        self.im_width = im_width
+        self.threshold = threshold
 
         self.bound_line()
+        if self.im_height is None or self.im_width is None:
+            self.im_height = self.max_y - self.min_y
+            self.im_width = self.max_x - self.min_x
 
     def bound_line(self):
         # find min and max x,y coordinates for the line
-        self.min_x = min(point[0] for stroke in self.line_strokes for point in stroke) - 20
-        self.min_y = min(point[1] for stroke in self.line_strokes for point in stroke) - 20
-        self.max_x = max(point[0] for stroke in self.line_strokes for point in stroke) + 20
-        self.max_y = max(point[1] for stroke in self.line_strokes for point in stroke) + 20
+        offset = int(self.threshold * 0.1)
+        self.min_x = min(point[0] for stroke in self.line_strokes for point in stroke) - offset
+        self.min_y = min(point[1] for stroke in self.line_strokes for point in stroke) - offset
+        self.max_x = max(point[0] for stroke in self.line_strokes for point in stroke) + offset
+        self.max_y = max(point[1] for stroke in self.line_strokes for point in stroke) + offset
 
         # adjust the coordinates of the points in the line so that they are relative to the bounding box
         for stroke in self.line_strokes:
@@ -32,7 +39,7 @@ class HandwrittenLine:
 
     def get_line_image(self):
         # initialize a blank image
-        img = np.zeros((self.max_y - self.min_y, self.max_x - self.min_x, 3), np.uint8)
+        img = np.zeros((self.im_height, self.im_width, 3), np.uint8)
 
         # draw each stroke onto the image
         for stroke in self.line_strokes:
@@ -45,9 +52,15 @@ class HandwrittenLine:
         cv2.waitKey(0)
         cv2.destroyAllWindows()
 
+#define a function to check if the stroke is a new paragraph
+def is_new_paragraph(prev_last_point, curr_first_point, threshold = 200):
+    if prev_last_point is None or curr_first_point is None:
+        return False
+    if curr_first_point[0] - prev_last_point[0] < -threshold:
+        return True
+    return False
 
-
-def create_dataset(file_path ):
+def process_xml(file_path ):
 
     # load eBeam XML file
     tree = ET.parse(file_path)
@@ -61,9 +74,6 @@ def create_dataset(file_path ):
     transcription = root.find('Transcription')
     text = transcription.find('Text')
     linesprint = text.text.strip().splitlines()
-
-    # set threshold for x-axis difference between paragraphs
-    threshold = 200
 
     # initialize variables for tracking line status
     prev_last_point = None
@@ -85,7 +95,7 @@ def create_dataset(file_path ):
         curr_first_point = _points[0]
 
         # check if this stroke is a new paragraph
-        if prev_last_point is not None and curr_first_point is not None and curr_first_point[0] - prev_last_point[0] < -threshold:
+        if is_new_paragraph(prev_last_point, curr_first_point):
             # this stroke is a new paragraph
 
             # add current line strokes to the line_objects list
@@ -108,6 +118,6 @@ def create_dataset(file_path ):
 
 
 if __name__ == '__main__':
-    line_objects = create_dataset('original/a01/a01-013/strokesz.xml')
+    line_objects = process_xml('original/a01/a01-013/strokesz.xml')
     for line in line_objects:
         line.show_line_image()
