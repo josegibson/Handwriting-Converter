@@ -1,123 +1,69 @@
-import xml.etree.ElementTree as ET
+import os
 import numpy as np
+import xml.etree.ElementTree as ET
 import cv2
 
+global_arr = np.array([])
 
-class HandwrittenLine:
-    def __init__(self, line_strokes, text, threshold=200, im_height=None, im_width=None):
-        self.text = text
-        self.line_strokes = line_strokes
-        self.min_x = None
-        self.min_y = None
-        self.max_x = None
-        self.max_y = None
-        self.im_height = im_height
-        self.im_width = im_width
-        self.threshold = threshold
-
-        self.bound_line()
-        if self.im_height is None or self.im_width is None:
-            self.im_height = self.max_y - self.min_y
-            self.im_width = self.max_x - self.min_x
-
-    def bound_line(self):
-        # find min and max x,y coordinates for the line
-        offset = int(self.threshold * 0.1)
-        self.min_x = min(point[0] for stroke in self.line_strokes for point in stroke) - offset
-        self.min_y = min(point[1] for stroke in self.line_strokes for point in stroke) - offset
-        self.max_x = max(point[0] for stroke in self.line_strokes for point in stroke) + offset
-        self.max_y = max(point[1] for stroke in self.line_strokes for point in stroke) + offset
-
-        # adjust the coordinates of the points in the line so that they are relative to the bounding box
-        for stroke in self.line_strokes:
-            for point in stroke:
-                point[0] -= self.min_x
-                point[1] -= self.min_y
-
-        # return the adjusted strokes and bounding box details
-        return self.min_x, self.min_y, self.max_x, self.max_y
-
-    def get_line_image(self):
-        # initialize a blank image
-        img = np.zeros((self.im_height, self.im_width, 3), np.uint8)
-
-        # draw each stroke onto the image
-        for stroke in self.line_strokes:
-            cv2.polylines(img, [stroke], False, (0, 255, 0), 2)
-
-        return img
-    
-    def show_line_image(self):
-        cv2.imshow(self.text, self.get_line_image())
-        cv2.waitKey(0)
-        cv2.destroyAllWindows()
-
-#define a function to check if the stroke is a new paragraph
-def is_new_paragraph(prev_last_point, curr_first_point, threshold = 200):
+def is_new_paragraph(prev_last_point, curr_first_point, threshold=200):
     if prev_last_point is None or curr_first_point is None:
         return False
     if curr_first_point[0] - prev_last_point[0] < -threshold:
         return True
     return False
 
-def process_xml(file_path ):
 
-    # load eBeam XML file
-    tree = ET.parse(file_path)
-    root = tree.getroot()
-    line_objects = []
+def strokes_to_image(strokes):
 
-    # get the strokeset from the XML file
-    strokeset = root.find('StrokeSet')
+    strokes = np.array(strokes)
 
-    # get the transcription from the XML file
-    transcription = root.find('Transcription')
-    text = transcription.find('Text')
-    linesprint = text.text.strip().splitlines()
+    # Calculate the bounding box of the strokes
+    x_min, y_min = np.min(strokes, axis=(0, 1))
+    x_max, y_max = np.max(strokes, axis=(0, 1))
+    width = x_max - x_min
+    height = y_max - y_min
 
-    # initialize variables for tracking line status
-    prev_last_point = None
-    curr_first_point = None
-    line_no = 0
+    # Calculate the center of the bounding box
+    center_x = (x_min + x_max) // 2
+    center_y = (y_min + y_max) // 2
 
-    # initialize variables for tracking line strokes
-    line_strokes = []
+    # Create an empty image
+    img = np.zeros((height, width), dtype=np.uint8)
 
-    for stroke in strokeset:
+    # Shift the strokes to the center of the image and draw them
+    shifted_strokes = np.array(strokes) - [center_x, center_y]
+    for stroke in shifted_strokes:
+        cv2.polylines(img, [stroke.astype(np.int32)], False, 255, thickness=2)
 
-        # get points from stroke
-        _points = stroke.findall('Point')
-
-        # convert points to numpy array
-        _points = np.array([[float(point.get('x')), float(point.get('y'))] for point in _points]) / 10
-        _points = _points.astype(int)
-
-        curr_first_point = _points[0]
-
-        # check if this stroke is a new paragraph
-        if is_new_paragraph(prev_last_point, curr_first_point):
-            # this stroke is a new paragraph
-
-            # add current line strokes to the line_objects list
-            if line_strokes:
-                line_objects.append(HandwrittenLine(line_strokes, linesprint[line_no]))
-                line_no += 1
-            line_strokes = []
-
-        # add current stroke to current line strokes
-        line_strokes.append(_points)
-
-        # update variables for tracking paragraph boundaries
-        prev_last_point = _points[-1]
-
-    # add last line strokes to the line data dictionary
-    if line_strokes:
-        line_objects.append(HandwrittenLine(line_strokes, linesprint[line_no]))
-
-    return line_objects
+    return img
 
 
-if __name__ == '__main__':
-    line_objects = process_xml('original/a01/a01-013/strokesz.xml')
-    for line in line_objects:
-        line.show_line_image()
+for root, dirs, files in os.walk("original"):
+    for file in files:
+        if file.endswith(".xml"):
+            xml_path = os.path.join(root, file)
+            tree = ET.parse(xml_path)
+            root = tree.getroot()
+            strokesets = root.find("StrokeSet")
+            strokes = []
+            for stroke in strokesets.findall("./Stroke"):
+                points = []
+                for point in stroke.findall("./Point"):
+                    x = float(point.get("x"))
+                    y = float(point.get("y"))
+                    points.append([x, y])
+                strokes.append(points)
+
+            prev_last_point = None
+            strokes_of_line = []
+            for stroke in strokes:
+                curr_first_point = stroke[0]
+                if is_new_paragraph(prev_last_point, curr_first_point):
+                    
+                    cv2.imshow(strokes_to_image(strokes_of_line))
+
+                    strokes_of_line = []
+
+                else:
+                    strokes_of_line.append(stroke)
+                prev_last_point = stroke[-1]
