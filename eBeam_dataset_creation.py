@@ -6,7 +6,7 @@ from strokeset_image_class import HandwritingScaler
 
 global_arr = np.array([])
 
-def is_new_paragraph(prev_last_point, curr_first_point, threshold=300):
+def is_new_line(prev_last_point, curr_first_point, threshold=350):
     if prev_last_point is None or curr_first_point is None:
         return False
     if curr_first_point[0] - prev_last_point[0] < -threshold:
@@ -61,14 +61,14 @@ def run_over():
                 strokes_of_line = []
                 for stroke in strokes:
                     curr_first_point = stroke[0]
-                    if is_new_paragraph(prev_last_point, curr_first_point):
+                    if is_new_line(prev_last_point, curr_first_point):
                         data.append(strokes_of_line)
 
                         #god mode
                         if len(data) > 10:
                             return data
 
-                        strokes_of_line = []
+                        strokes_of_line = [stroke]
 
                     else:
                         strokes_of_line.append(stroke)

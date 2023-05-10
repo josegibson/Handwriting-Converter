@@ -6,7 +6,7 @@ from itertools import chain
 class HandwritingScaler:
     """Scale the handwriting to a target size while preserving the aspect ratio"""
 
-    def __init__(self, data, target_bbox=(1000, 200)):
+    def __init__(self, data, target_bbox=(1000, 300)):
         self.target_bbox = target_bbox
         self.data = data
 
@@ -37,14 +37,11 @@ class HandwritingScaler:
             strokes = strokes * scale_factor + target_center
             strokes = strokes.astype(np.int32)
             cv2.polylines(img, [strokes], False, 255, thickness=2)
-            cv2.imshow(str(i), img)
-            cv2.waitKey(0)
-            cv2.destroyAllWindows()
 
         return img
 
     def display(self, **kwargs):
         img = self.generate_image(**kwargs)
-        cv2.imshow("image", img)
+        cv2.imshow('test', img)
         cv2.waitKey(0)
         cv2.destroyAllWindows()
