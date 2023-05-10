@@ -2,10 +2,11 @@ import os
 import numpy as np
 import xml.etree.ElementTree as ET
 import cv2
+from strokeset_image_class import HandwritingScaler
 
 global_arr = np.array([])
 
-def is_new_paragraph(prev_last_point, curr_first_point, threshold=200):
+def is_new_paragraph(prev_last_point, curr_first_point, threshold=300):
     if prev_last_point is None or curr_first_point is None:
         return False
     if curr_first_point[0] - prev_last_point[0] < -threshold:
@@ -38,32 +39,43 @@ def strokes_to_image(strokes):
     return img
 
 
-for root, dirs, files in os.walk("original"):
-    for file in files:
-        if file.endswith(".xml"):
-            xml_path = os.path.join(root, file)
-            tree = ET.parse(xml_path)
-            root = tree.getroot()
-            strokesets = root.find("StrokeSet")
-            strokes = []
-            for stroke in strokesets.findall("./Stroke"):
-                points = []
-                for point in stroke.findall("./Point"):
-                    x = float(point.get("x"))
-                    y = float(point.get("y"))
-                    points.append([x, y])
-                strokes.append(points)
+def run_over():
+    data = []
+    for root, dirs, files in os.walk("original"):
+        for file in files:
+            if file.endswith(".xml"):
+                xml_path = os.path.join(root, file)
+                tree = ET.parse(xml_path)
+                root = tree.getroot()
+                strokesets = root.find("StrokeSet")
+                strokes = []
+                for stroke in strokesets.findall("./Stroke"):
+                    points = []
+                    for point in stroke.findall("./Point"):
+                        x = float(point.get("x"))
+                        y = float(point.get("y"))
+                        points.append([x, y])
+                    strokes.append(points)
 
-            prev_last_point = None
-            strokes_of_line = []
-            for stroke in strokes:
-                curr_first_point = stroke[0]
-                if is_new_paragraph(prev_last_point, curr_first_point):
-                    
-                    cv2.imshow(strokes_to_image(strokes_of_line))
+                prev_last_point = None
+                strokes_of_line = []
+                for stroke in strokes:
+                    curr_first_point = stroke[0]
+                    if is_new_paragraph(prev_last_point, curr_first_point):
+                        data.append(strokes_of_line)
 
-                    strokes_of_line = []
+                        #god mode
+                        if len(data) > 10:
+                            return data
 
-                else:
-                    strokes_of_line.append(stroke)
-                prev_last_point = stroke[-1]
+                        strokes_of_line = []
+
+                    else:
+                        strokes_of_line.append(stroke)
+                    prev_last_point = stroke[-1]
+    
+    return data
+
+
+
+
