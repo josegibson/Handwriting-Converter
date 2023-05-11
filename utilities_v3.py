@@ -67,6 +67,7 @@ class StrokeSet:
 
     def __init__(self, strokes=None):
         self.strokes = []
+
         if strokes is not None:
             for s in strokes:
                 if isinstance(s, Stroke):
@@ -75,12 +76,14 @@ class StrokeSet:
                     self.strokes.append(Stroke([Point(*p) for p in s]))
                 else:
                     raise ValueError("Input must be a Stroke or a list/tuple of points")
-        self.bbox = self._calculate_bbox()
+        
+        self.format_strokeset()
 
     @classmethod
     def from_sequence_data(self, sequence_data):
         strokes = []
         current_stroke = []
+
         for i, data in enumerate(sequence_data):
             x = data[0] + self.bbox.x_min
             y = data[1] + self.bbox.y_min
@@ -95,6 +98,35 @@ class StrokeSet:
                 current_stroke.append(point)
             if i == len(sequence_data) - 1 and current_stroke:
                 strokes.append(Stroke(current_stroke))
+        return StrokeSet(strokes)
+
+    @classmethod
+    def from_sequence(self, sequence_data):
+        strokes = []
+        current_stroke = []
+
+        curr_x = 0
+        curr_y = 0
+        curr_t = 0
+
+        for i, data in enumerate(sequence_data):
+            curr_x += data[0]
+            curr_y += data[1]
+            curr_t += data[2]
+            p = data[3]
+        
+            point = Point(curr_x, curr_y, curr_t)
+
+            if p:
+                current_stroke.append(point)
+            else:
+                if current_stroke:
+                    strokes.append(Stroke(current_stroke))
+                current_stroke = [point]
+
+        if current_stroke:
+            strokes.append(Stroke(current_stroke))
+
         return StrokeSet(strokes)
 
     def add_stroke(self, stroke):
@@ -118,23 +150,32 @@ class StrokeSet:
     def format_strokeset(self):
         # substract the bbox centre from all the points in the strokeset
 
+        self.bbox = self._calculate_bbox()
+
         for stroke in self.strokes:
             for point in stroke:
-                point.x = point.x - self.bbox["center"][0]
-                point.y = point.y - self.bbox["center"][1]
+                point.x = point.x - self.bbox['x_min']
+                point.y = point.y - self.bbox['y_min']
+                
+        self.bbox = self._calculate_bbox()
 
     def to_sequence(self):
         displacement_data = []
         prev_point = None
         for stroke in self.strokes:
             for i, point in enumerate(stroke):
-                dx, dy, dt = point - prev_point if prev_point is not None else (point.x - self.bbox['x_min'], point.y - self.bbox['y_min'], 0)
+                dx, dy, dt = point - prev_point if prev_point is not None else (point.x, point.y, 0)
                 displacement_data.append([dx, dy, dt, int(i != 0)])
                 prev_point = point
 
         return np.array(displacement_data)
 
     def to_numpy_image(self, image_size = (1000, 200)):
+
+        for stroke in self.strokes:
+            for point in stroke:
+                point.x = point.x - self.bbox["center"][0]
+                point.y = point.y - self.bbox["center"][1]
         
         max_dim = max(self.bbox["width"], self.bbox["height"])
         scale = image_size[0] / max_dim
@@ -217,21 +258,26 @@ class DataProcessor:
         return split_stroke_sets
 
 
+#take a strokeset and convert to image, display, convert it to sequence data, convert the sequence data back to strokeset and to image and display
 
-#make a strokeset from a folder of xml files and display its image
-
-data_processor = DataProcessor()
+'''data_processor = DataProcessor()
 data_processor.from_folder("original\\a01")
-stroke_sets = data_processor.split_strokesets(threshold=3500)
-print(len(stroke_sets))
-stroke_set = stroke_sets[21]
-print(stroke_set)
-stroke_set.format_strokeset()
+stroke_sets = data_processor.split_strokesets(3000)
+stroke_set = stroke_sets[0]
+
+#display the original strokeset
 image = stroke_set.to_numpy_image()
-cv2.imshow("image", image)
+cv2.imshow("original", image)
 cv2.waitKey(0)
 cv2.destroyAllWindows()
 
-#print the sequence of the strokeset
-sequence = stroke_set.to_sequence()
-print(sequence.shape)
+print(stroke_set)
+sequence_data = stroke_set.to_sequence()
+stroke_set = StrokeSet.from_sequence(sequence_data)
+print(stroke_set)
+
+#display the strokeset after converting to sequence and back
+image = stroke_set.to_numpy_image()
+cv2.imshow("after converting to sequence and back", image)
+cv2.waitKey(0)
+cv2.destroyAllWindows()'''
