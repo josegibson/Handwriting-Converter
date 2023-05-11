@@ -31,7 +31,7 @@ class Stroke:
 
     def add_point(self, x, y, t):
         self.points.append(Point(x, y, t))
-
+    
     def get_points(self, as_tuple=False, for_image=False):
         if as_tuple:
             if for_image:
@@ -196,6 +196,7 @@ class StrokeSet:
 
 
 class DataProcessor:
+    
     def __init__(self, strokeSets=[]):
         self.strokeSets = strokeSets
 
