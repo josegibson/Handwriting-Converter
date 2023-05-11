@@ -4,7 +4,7 @@ import xml.etree.ElementTree as ET
 import cv2
 from strokeset_image_class import HandwritingScaler
 
-global_arr = np.array([])
+
 
 def is_new_line(prev_last_point, curr_first_point, threshold=350):
     if prev_last_point is None or curr_first_point is None:
