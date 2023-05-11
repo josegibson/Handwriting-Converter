@@ -80,27 +80,6 @@ class StrokeSet:
         self.format_strokeset()
 
     @classmethod
-    def from_sequence_data(self, sequence_data):
-        strokes = []
-        current_stroke = []
-
-        for i, data in enumerate(sequence_data):
-            x = data[0] + self.bbox.x_min
-            y = data[1] + self.bbox.y_min
-            t = data[2]
-            is_start = data[3]
-            point = Point(x, y, t)
-            if is_start:
-                if current_stroke:
-                    strokes.append(Stroke(current_stroke))
-                current_stroke = [point]
-            else:
-                current_stroke.append(point)
-            if i == len(sequence_data) - 1 and current_stroke:
-                strokes.append(Stroke(current_stroke))
-        return StrokeSet(strokes)
-
-    @classmethod
     def from_sequence(self, sequence_data):
         strokes = []
         current_stroke = []
@@ -258,26 +237,28 @@ class DataProcessor:
         return split_stroke_sets
 
 
-#take a strokeset and convert to image, display, convert it to sequence data, convert the sequence data back to strokeset and to image and display
+def test(folder_name = "original\\a01"):
+    # take a strokeset and convert to image, display, convert it to sequence data, convert the sequence
+    # data back to strokeset and to image and display
 
-'''data_processor = DataProcessor()
-data_processor.from_folder("original\\a01")
-stroke_sets = data_processor.split_strokesets(3000)
-stroke_set = stroke_sets[0]
+    data_processor = DataProcessor()
+    data_processor.from_folder(folder_name)
+    stroke_sets = data_processor.split_strokesets(3000)
+    stroke_set = stroke_sets[7]
 
-#display the original strokeset
-image = stroke_set.to_numpy_image()
-cv2.imshow("original", image)
-cv2.waitKey(0)
-cv2.destroyAllWindows()
+    #display the original strokeset
+    image = stroke_set.to_numpy_image()
+    cv2.imshow("original", image)
+    cv2.waitKey(0)
+    cv2.destroyAllWindows()
 
-print(stroke_set)
-sequence_data = stroke_set.to_sequence()
-stroke_set = StrokeSet.from_sequence(sequence_data)
-print(stroke_set)
+    print(stroke_set)
+    sequence_data = stroke_set.to_sequence()
+    stroke_set = StrokeSet.from_sequence(sequence_data)
+    print(stroke_set)
 
-#display the strokeset after converting to sequence and back
-image = stroke_set.to_numpy_image()
-cv2.imshow("after converting to sequence and back", image)
-cv2.waitKey(0)
-cv2.destroyAllWindows()'''
+    #display the strokeset after converting to sequence and back
+    image = stroke_set.to_numpy_image()
+    cv2.imshow("after converting to sequence and back", image)
+    cv2.waitKey(0)
+    cv2.destroyAllWindows()
