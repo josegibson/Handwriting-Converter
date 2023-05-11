@@ -10,13 +10,13 @@ class Point:
         self.y = y
         self.t = t
 
-    def get_tuple(self):
+    def to_3d(self):
         return self.x, self.y, self.t
+    
+    def to_2d(self):
+        return self.x, self.y
 
     def __str__(self) -> str:
-        return f"({self.x}, {self.y}, {self.t})"
-
-    def __repr__(self) -> str:
         return f"({self.x}, {self.y}, {self.t})"
 
     def __sub__(self, other):

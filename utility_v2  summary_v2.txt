@@ -1,0 +1,43 @@
+Class Point:
+- get_tuple(): Returns the x, y, and t values of a point as a tuple.
+- sub(other): Returns the difference between two points as a tuple.
+
+Class Stroke:
+- __init__(self): Initializes a new Stroke object.
+- add_point(x, y, t): Adds a new point to the stroke.
+- get_points(as_tuple=False, for_image=False): Returns the points of a stroke as a list of Point objects or tuples. If as_tuple is True, the points are returned as tuples. If for_image is True, the time values are excluded from the tuples.
+- get_first_point(): Returns the first point of the stroke.
+- get_last_point(): Returns the last point of the stroke.
+- sub(other): Returns the x-coordinate difference between the last point of the first stroke and the first point of the second stroke.
+- len(): Returns the number of points in the stroke.
+- str(): Returns a string representation of the stroke.
+- __getitem__(self, index): Returns the point at the given index.
+
+Class StrokeSet:
+- __init__(self): Initializes a new StrokeSet object.
+- add_stroke(stroke): Adds a stroke to the StrokeSet.
+- to_sequence(): Returns a sequence of displacements for the strokes in the StrokeSet.
+- sequence_to_strokes(sequence): Converts a displacement sequence into a set of strokes.
+- normalize_sequence(sequence): Normalizes the displacement sequence to have values between 0 and 1.
+- format_strokeset(): Returns a list of strokes formatted for use in an image.
+- strokeset_to_image(image_size=(1000, 200)): Creates an image of the stroke set. The image size can be specified.
+- split_by_lines(): Splits the stroke set into sub-strokes based on a vertical distance threshold between strokes. It returns a list of StrokeSet objects, each representing a line of text.
+- split_by_lift_threshold(threshold): Splits the stroke set into sub-strokes based on a vertical distance threshold between the start and end points of adjacent strokes. It returns a list of StrokeSet objects.
+
+Class DataProcessor:
+- __init__(self, strokeSets=[]): Initializes the DataProcessor object with a list of StrokeSet objects.
+- add_strokeSet(strokeSet): Adds a StrokeSet object to the list of strokeSets.
+- get_strokeSets(): Returns the list of StrokeSet objects.
+- from_folder(folder_path): Reads in stroke data from .xml files in a given folder, parses the XML data, and creates StrokeSet objects from the stroke data. It appends these StrokeSet objects to the list of strokeSets.
+- spread_lines(): Applies the split_by_lines() method to each StrokeSet object in the list of strokeSets, and returns a flattened list of StrokeSet objects.
+- spread_lift_threshold(threshold): Applies the split_by_lift_threshold() method to each StrokeSet object in the list of strokeSets, and returns a flattened list of StrokeSet objects.
+
+Class DatasetCreator:
+- __init__(self, data_folder_path): Initializes a new DatasetCreator object with the path to the data folder.
+- create_dataset(): Uses the StrokeProcessor class to create a dataset from the .xml files containing handwriting data in the data folder. It stores the data in a dictionary with keys for the stroke, sequence, and image data, as well as any metadata associated with the data point.
+
+Class HandwritingDataset:
+- __init__(self): Initializes a new HandwritingDataset object.
+- load_from_folder(folder_path): Loads the handwriting data from a given folder path into the HandwritingDataset object.
+- save_to_folder(folder_path): Saves the handwriting data in the HandwritingDataset object to a given folder path.
+- preprocess_data(): Preprocesses the data in the

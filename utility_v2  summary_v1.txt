@@ -1,0 +1,42 @@
+Classes:
+
+- Point: Represents a point in a 2D space with an associated time value.
+- Stroke: Represents a stroke, which is a collection of points, with start and end times.
+- StrokeSet: Represents a set of strokes.
+- DataProcessor: Processes StrokeSet objects and provides various methods to manipulate them.
+
+Methods:
+
+- Point.get_tuple(): Returns the x, y, and t values of a point as a tuple.
+- Point.sub(other): Returns the difference between two points as a tuple.
+- Stroke.add_point(x, y, t): Adds a new point to the stroke.
+- Stroke.get_points(as_tuple=False, for_image=False): Returns the points of a stroke as a list of Point objects or tuples. If `as_tuple` is True, the points are returned as tuples. If `for_image` is True, the time values are excluded from the tuples.
+- Stroke.get_first_point(): Returns the first point of the stroke.
+- Stroke.get_last_point(): Returns the last point of the stroke.
+- Stroke.sub(other): Returns the x-coordinate difference between the last point of the first stroke and the first point of the second stroke.
+- Stroke.len(): Returns the number of points in the stroke.
+- Stroke.str(): Returns a string representation of the stroke.
+- Stroke.getitem(index): Returns the point at the given index.
+- StrokeSet.to_sequence(): Returns a sequence of displacements for the strokes in the StrokeSet.
+- StrokeSet.sequence_to_strokes(sequence): Converts a displacement sequence into a set of strokes.
+- StrokeSet.normalize_sequence(sequence): Normalizes the displacement sequence to have values between 0 and 1.
+- StrokeSet.format_strokeset(): Returns a list of strokes formatted for use in an image.
+- StrokeSet.strokeset_to_image(image_size=(1000, 200)): Creates an image of the stroke set. The image size can be specified.
+- StrokeSet.split_by_lines(): Splits the stroke set into sub-strokes based on a vertical distance threshold between strokes. It returns a list of StrokeSet objects, each representing a line of text.
+- StrokeSet.split_by_lift_threshold(threshold): Splits the stroke set into sub-strokes based on a vertical distance threshold between the start and end points of adjacent strokes. It returns a list of StrokeSet objects.
+- DataProcessor.__init__(strokeSets=[]): Initializes the DataProcessor object with a list of StrokeSet objects.
+- DataProcessor.add_strokeSet(strokeSet): Adds a StrokeSet object to the list of strokeSets.
+- DataProcessor.get_strokeSets(): Returns the list of StrokeSet objects.
+- DataProcessor.from_folder(folder_path): Reads in stroke data from .xml files in a given folder, parses the XML data, and creates StrokeSet objects from the stroke data. It appends these StrokeSet objects to the list of strokeSets.
+- DataProcessor.spread_lines(): Applies the split_by_lines() method to each StrokeSet object in the list of strokeSets, and returns a flattened list of StrokeSet objects.
+- DataProcessor.spread_lift_threshold(threshold): Applies the split_by_lift_threshold() method to each StrokeSet object in the list of strokeSets, and returns a flattened list of StrokeSet objects.
+
+DatasetCreator class:
+
+- This class uses the StrokeProcessor class to create a dataset from a folder of .xml files containing handwriting data.
+- It creates a set of strokes, sequences, and images for each data point, and stores these in a dictionary with keys for the stroke, sequence, and image data, as well as any metadata associated with the data point.
+- It also has functions to handle OCR scanned text associated with the handwriting data.
+
+HandwritingDataset class:
+
+- This class defines the structure of a handwriting dataset, containing a list
